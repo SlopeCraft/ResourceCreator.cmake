@@ -21,80 +21,6 @@
 # SOFTWARE.
 
 
-# normal run, inclusion block
-if (NOT RSC_CREATE)
-	# cache script path
-	set(RSC_SCRIPT "${CMAKE_CURRENT_LIST_FILE}")
-
-	function(add_resource rscName)
-		# parse named arguments
-		set(options "")
-		set(args VAR RELATIVE ARCHIVE)
-		set(list_args "")
-		cmake_parse_arguments(PARSE_ARGV 1 arg "${options}" "${args}" "${list_args}")
-
-		if (NOT rscName)
-			message(FATAL_ERROR "add_resource: resource name must be set")
-			return()
-		endif()
-
-		if (NOT arg_UNPARSED_ARGUMENTS)
-			message(FATAL_ERROR "add_resource: No resource files were passed")
-			return()
-		endif()
-
-		if (NOT arg_VAR)
-			set(arg_VAR "${rscName}")
-		endif()
-
-		list(LENGTH arg_UNPARSED_ARGUMENTS numInputFiles)
-
-		if (NOT arg_ARCHIVE AND numInputFiles GREATER 1)
-			message(FATAL_ERROR
-				"add_resource: In non-archival mode you can include only single file.")
-		endif()
-
-		set(SUPPORTED_ARCHIVE_TYPES zip 7zip)
-		# set default
-		if (arg_ARCHIVE AND NOT arg_ARCHIVE IN_LIST SUPPORTED_ARCHIVE_TYPES)
-			message(FATAL_ERROR 
-				"add_resource: Invalid archive type \"${arg_ARCHIVE}\", supported are \"${SUPPORTED_ARCHIVE_TYPES}\"")
-			return()
-		endif()
-
-		# set export vars
-		set(RSC_ID "__rsc_${rscName}")
-		set(RSC_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${RSC_ID}.c")
-		set(RSC_OUTPUT_VAR "${arg_VAR}")
-		set(RSC_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${RSC_ID}")
-		set(RSC_INPUT "${arg_UNPARSED_ARGUMENTS}")
-		set(RSC_RELATIVE "${arg_RELATIVE}")
-		set(RSC_ARCHIVE "${arg_ARCHIVE}")
-
-		add_custom_command(
-			OUTPUT "${RSC_OUTPUT}"
-			COMMAND 
-				"${CMAKE_COMMAND}"
-					-DRSC_CREATE=ON
-					# -DRSC_DEBUG=ON
-					-DRSC_ID="${RSC_ID}"
-					-DRSC_OUTPUT="${RSC_OUTPUT}"
-					-DRSC_OUTPUT_VAR="${RSC_OUTPUT_VAR}"
-					-DRSC_OUTPUT_DIR="${RSC_OUTPUT_DIR}"
-					-DRSC_INPUT="${RSC_INPUT}"
-					-DRSC_RELATIVE="${RSC_RELATIVE}"
-					-DRSC_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
-					-DRSC_ARCHIVE="${RSC_ARCHIVE}"
-					-P "${RSC_SCRIPT}"
-			DEPENDS ${arg_UNPARSED_ARGUMENTS}
-			COMMENT "Create \"${rscName}\" resource file"
-		)
-		add_library("${rscName}" INTERFACE)
-		target_sources("${rscName}" INTERFACE "${RSC_OUTPUT}")
-	endfunction()
-
-	return()
-endif()
 
 function(generate_c_file inpath outpath rcname)
 	file(READ "${inpath}" file_bytes HEX)
@@ -217,4 +143,77 @@ function(create_c_resource)
 endfunction()
 
 # run create resource block 
-create_c_resource()
+#create_c_resource()
+
+
+	function(add_resource_config_time rscName)
+		# parse named arguments
+		set(options "")
+		set(args VAR RELATIVE ARCHIVE)
+		set(list_args "")
+		cmake_parse_arguments(PARSE_ARGV 1 arg "${options}" "${args}" "${list_args}")
+
+		if (NOT rscName)
+			message(FATAL_ERROR "add_resource: resource name must be set")
+			return()
+		endif()
+
+		if (NOT arg_UNPARSED_ARGUMENTS)
+			message(FATAL_ERROR "add_resource: No resource files were passed")
+			return()
+		endif()
+
+		if (NOT arg_VAR)
+			set(arg_VAR "${rscName}")
+		endif()
+
+		list(LENGTH arg_UNPARSED_ARGUMENTS numInputFiles)
+
+		if (NOT arg_ARCHIVE AND numInputFiles GREATER 1)
+			message(FATAL_ERROR
+				"add_resource: In non-archival mode you can include only single file.")
+		endif()
+
+		set(SUPPORTED_ARCHIVE_TYPES zip 7zip)
+		# set default
+		if (arg_ARCHIVE AND NOT arg_ARCHIVE IN_LIST SUPPORTED_ARCHIVE_TYPES)
+			message(FATAL_ERROR 
+				"add_resource: Invalid archive type \"${arg_ARCHIVE}\", supported are \"${SUPPORTED_ARCHIVE_TYPES}\"")
+			return()
+		endif()
+
+		# set export vars
+		set(RSC_ID "__rsc_${rscName}")
+		set(RSC_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${RSC_ID}.c")
+		set(RSC_OUTPUT_VAR "${arg_VAR}")
+		set(RSC_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${RSC_ID}")
+		set(RSC_INPUT "${arg_UNPARSED_ARGUMENTS}")
+		set(RSC_RELATIVE "${arg_RELATIVE}")
+		set(RSC_ARCHIVE "${arg_ARCHIVE}")
+
+		create_c_resource()
+
+		add_library(${rscName} OBJECT ${RSC_OUTPUT})
+		
+
+		#add_custom_command(
+		#	OUTPUT "${RSC_OUTPUT}"
+		#	COMMAND 
+		#		"${CMAKE_COMMAND}"
+		#			-DRSC_CREATE=ON
+		#			# -DRSC_DEBUG=ON
+		#			-DRSC_ID="${RSC_ID}"
+		#			-DRSC_OUTPUT="${RSC_OUTPUT}"
+		#			-DRSC_OUTPUT_VAR="${RSC_OUTPUT_VAR}"
+		#			-DRSC_OUTPUT_DIR="${RSC_OUTPUT_DIR}"
+		#			-DRSC_INPUT="${RSC_INPUT}"
+		#			-DRSC_RELATIVE="${RSC_RELATIVE}"
+		#			-DRSC_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+		#			-DRSC_ARCHIVE="${RSC_ARCHIVE}"
+		#			-P "${RSC_SCRIPT}"
+		#	DEPENDS ${arg_UNPARSED_ARGUMENTS}
+		#	COMMENT "Create \"${rscName}\" resource file"
+		#)
+		#add_library("${rscName}" INTERFACE)
+		#target_sources("${rscName}" INTERFACE "${RSC_OUTPUT}")
+	endfunction(add_resource_config_time)
